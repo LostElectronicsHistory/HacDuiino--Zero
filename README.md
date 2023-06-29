@@ -1,2 +1,2 @@
-# HacDuiino--Zero
+# HacKDuiino--Zero
 Flipper zero arduino clone
