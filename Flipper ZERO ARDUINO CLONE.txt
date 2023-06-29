@@ -1,0 +1,170 @@
+#include <U8g2lib.h>
+#include <Wire.h>
+
+#define SELECT_PIN A1
+#define UP_PIN A0
+#define DOWN_PIN 9
+#define OLED_SCL A5
+#define OLED_SDA A4
+
+U8G2_SSD1306_128X64_NONAME_F_SW_I2C u8g2(U8G2_R0, OLED_SCL, OLED_SDA, U8X8_PIN_NONE);
+
+const int MENU_BAD_USB = 0;
+const int MENU_RFID = 1;
+const int MENU_SUB_GHZ = 2;
+const int MENU_BLUETOOTH = 3;
+const int MENU_SECOND_PAGE = 4;
+const int MENU_BACK = 5;
+int currentMenu = MENU_BAD_USB;
+
+unsigned long slideShowTimer = 0;
+const unsigned long slideShowInterval = 1000;  // Interval between slides in milliseconds
+
+const char* slideShowTexts[] = {
+  "FF0 Menu",
+  "Welcome",
+  "Select an Option",
+};
+
+const int slideShowTextsCount = sizeof(slideShowTexts) / sizeof(slideShowTexts[0]);
+int currentSlideIndex = 0;
+
+bool inSecondScreen = false;
+
+void drawMenu() {
+  u8g2.clearBuffer();
+
+  // Draw slide show text
+  u8g2.setFont(u8g2_font_8x13_tr);
+  u8g2.drawStr(0, 10, slideShowTexts[currentSlideIndex]);
+
+  if (inSecondScreen) {
+    // Draw second screen options
+    u8g2.setFont(u8g2_font_9x15_tr);
+    u8g2.setCursor(0, 40);
+    u8g2.print("> Back");
+  } else {
+    // Draw first screen options
+    u8g2.setFont(u8g2_font_9x15_tr);
+    for (int i = 0; i < slideShowTextsCount; i++) {
+      u8g2.setCursor(0, 40 + i * 20);
+      if (currentMenu == i) {
+        u8g2.print(">");
+      }
+      switch (i) {
+        case MENU_BAD_USB:
+          u8g2.print("Bad USB");
+          break;
+        case MENU_RFID:
+          u8g2.print("RFID Hacking");
+          break;
+        case MENU_SUB_GHZ:
+          u8g2.print("Sub-GHz Hacking");
+          break;
+        case MENU_BLUETOOTH:
+          u8g2.print("Bluetooth Hacking");
+          break;
+      }
+    }
+  }
+
+  u8g2.sendBuffer();
+}
+
+void scrollMenuUp() {
+  if (inSecondScreen) {
+    currentMenu--;
+    if (currentMenu < MENU_BACK) {
+      currentMenu = MENU_RFID;
+      inSecondScreen = false;
+    }
+  } else {
+    currentMenu--;
+    if (currentMenu < MENU_BAD_USB) {
+      currentMenu = MENU_BLUETOOTH;
+    }
+  }
+}
+
+void scrollMenuDown() {
+  if (inSecondScreen) {
+    currentMenu++;
+    if (currentMenu > MENU_BACK) {
+      currentMenu = MENU_RFID;
+      inSecondScreen = false;
+    }
+  } else {
+    currentMenu++;
+    if (currentMenu > MENU_BLUETOOTH) {
+      currentMenu = MENU_BAD_USB;
+    }
+  }
+}
+
+void selectOption() {
+  if (inSecondScreen) {
+    if (currentMenu == MENU_BACK) {
+      currentMenu = MENU_RFID;
+      inSecondScreen = false;
+    }
+  } else {
+    switch (currentMenu) {
+      case MENU_BAD_USB:
+        // Code for Bad USB
+        digitalWrite(13, HIGH); // Turn on power to pin 13
+        break;
+      case MENU_RFID:
+        // Code for RFID hacking
+        break;
+      case MENU_SUB_GHZ:
+        // Code for Sub-GHz hacking
+        break;
+      case MENU_BLUETOOTH:
+        // Code for Bluetooth hacking
+        break;
+    }
+  }
+}
+
+void setup() {
+  pinMode(SELECT_PIN, INPUT_PULLUP);
+  pinMode(UP_PIN, INPUT_PULLUP);
+  pinMode(DOWN_PIN, INPUT_PULLUP);
+  pinMode(13, OUTPUT);
+  digitalWrite(13, LOW); // Set initial state to off
+
+  u8g2.begin();
+  u8g2.setFont(u8g2_font_9x15_tr);
+}
+
+void loop() {
+  unsigned long currentTime = millis();
+
+  if (currentTime - slideShowTimer >= slideShowInterval) {
+    slideShowTimer = currentTime;
+    currentSlideIndex++;
+    if (currentSlideIndex >= slideShowTextsCount) {
+      currentSlideIndex = 0;
+    }
+  }
+
+  drawMenu();
+
+  int upButtonState = digitalRead(UP_PIN);
+  int downButtonState = digitalRead(DOWN_PIN);
+
+  if (upButtonState == LOW) {
+    delay(100);  // Debounce delay
+    scrollMenuUp();
+  }
+
+  if (downButtonState == LOW) {
+    delay(100);  // Debounce delay
+    scrollMenuDown();
+  }
+
+  if (digitalRead(SELECT_PIN) == LOW) {
+    delay(100);  // Debounce delay
+    selectOption();
+  }
+}

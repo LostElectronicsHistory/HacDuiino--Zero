@@ -1,0 +1,7 @@
+Arduino Uno 
+Adafruit Blutooth Adapter
+3x Push Buttons 
+Arduino OLED Display 
+BreadBoard Or PCB
+Arduino R.F.I.D Reader
+Rasberry Pi Pico 
